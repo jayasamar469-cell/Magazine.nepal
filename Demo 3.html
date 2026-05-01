@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magzine.np | Order Portal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --gold: #d4af37;
+            --gold-glow: rgba(212, 175, 55, 0.4);
+            --bg: #0f0f0f;
+            --card: #1a1a1a;
+            --text: #ffffff;
+            --border: #333;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            margin: 0; padding: 20px;
+        }
+
+        .container { max-width: 450px; margin: 20px auto; }
+
+        header { text-align: center; margin-bottom: 30px; }
+        h1 { font-family: 'Playfair Display', serif; color: var(--gold); margin: 0; letter-spacing: 2px; }
+
+        .form-section {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border);
+        }
+
+        label { display: block; margin-bottom: 10px; color: var(--gold); font-size: 0.8rem; font-weight: 600; text-transform: uppercase; }
+
+        select, input, textarea {
+            width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px;
+            border: 1px solid var(--border); background: #252525; color: white;
+            box-sizing: border-box; font-size: 1rem;
+        }
+
+        textarea { height: 80px; resize: none; }
+
+        .upload-box { border: 2px dashed var(--gold); padding: 20px; text-align: center; border-radius: 12px; }
+        
+        /* Photo List Styling */
+        #fileList { margin-top: 15px; text-align: left; font-size: 0.85rem; }
+        .file-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #2a2a2a; padding: 8px; margin-bottom: 5px; border-radius: 5px; 
+        }
+        .remove-btn { color: #ff4444; cursor: pointer; font-weight: bold; padding: 0 10px; }
+
+        .status { font-size: 0.85rem; margin-top: 10px; font-weight: 600; }
+
+        /* Dynamic Submit Button */
+        button {
+            width: 100%; padding: 16px; border: none; border-radius: 8px;
+            font-weight: bold; font-size: 1.1rem; cursor: pointer;
+            transition: all 0.3s ease; margin-top: 10px;
+            background: #333; color: #777; /* Initial Disabled State */
+        }
+
+        button.active {
+            background: var(--gold);
+            color: #000;
+            box-shadow: 0 0 15px var(--gold-glow);
+        }
+
+        button:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>MAGZINE.NP</h1>
+        <p>Order Submission Portal</p>
+    </header>
+
+    <form id="orderForm">
+        <div class="form-section">
+            <label>1. Select Plan</label>
+            <select id="package" required onchange="validateForm()">
+                <option value="" disabled selected>Select Plan...</option>
+                <option value="8" data-min="17" data-max="24">8 Pages – Rs. 856</option>
+                <option value="12" data-min="24" data-max="36">12 Pages – Rs. 1284</option>
+                <option value="16" data-min="38" data-max="50">16 Pages – Rs. 1712</option>
+            </select>
+        </div>
+
+        <div class="form-section">
+            <label>2. Upload Photos</label>
+            <div class="upload-box">
+                <input type="file" id="photos" multiple accept="image/*" onchange="addPhotos(this.files)">
+                <p id="photoCounter" style="font-weight:bold; color:var(--gold)">Select plan first</p>
+            </div>
+            <div id="fileList"></div>
+            <div id="statusMessage" class="status"></div>
+        </div>
+
+        <div class="form-section">
+            <label>3. Delivery & Instructions</label>
+            <input type="text" id="fullname" placeholder="Full Name" oninput="validateForm()" required>
+            <input type="text" id="location" placeholder="City / Delivery Location" oninput="validateForm()" required>
+            <input type="tel" id="contact" placeholder="WhatsApp Number" oninput="validateForm()" required>
+            <input type="text" id="ig_user" placeholder="Instagram Username" oninput="validateForm()" required>
+            <textarea id="description" placeholder="Describe how you want your magazine to be made (themes, colors, text)..." oninput="validateForm()"></textarea>
+        </div>
+
+        <button type="submit" id="submitBtn" disabled>SUBMIT VIA WHATSAPP</button>
+    </form>
+</div>
+
+<script>
+    let selectedFiles = [];
+
+    function addPhotos(files) {
+        for (let file of files) {
+            selectedFiles.push(file);
+        }
+        renderFileList();
+        validateForm();
+    }
+
+    function removePhoto(index) {
+        selectedFiles.splice(index, 1);
+        renderFileList();
+        validateForm();
+    }
+
+    function renderFileList() {
+        const list = document.getElementById('fileList');
+        list.innerHTML = '';
+        selectedFiles.forEach((file, index) => {
+            const div = document.createElement('div');
+            div.className = 'file-item';
+            div.innerHTML = `<span>${file.name.substring(0,20)}...</span>
+                             <span class="remove-btn" onclick="removePhoto(${index})">✕</span>`;
+            list.appendChild(div);
+        });
+    }
+
+    function validateForm() {
+        const pkg = document.getElementById('package');
+        const submitBtn = document.getElementById('submitBtn');
+        const status = document.getElementById('statusMessage');
+        const counterText = document.getElementById('photoCounter');
+        
+        const name = document.getElementById('fullname').value;
+        const loc = document.getElementById('location').value;
+        const phone = document.getElementById('contact').value;
+        const ig = document.getElementById('ig_user').value;
+
+        if (!pkg.value) return;
+
+        const option = pkg.options[pkg.selectedIndex];
+        const min = parseInt(option.getAttribute('data-min'));
+        const max = parseInt(option.getAttribute('data-max'));
+        const count = selectedFiles.length;
+
+        counterText.innerText = `${count} Photos Added (Target: ${min}-${max})`;
+
+        let photoValid = count >= min && count <= max;
+        let detailsValid = name && loc && phone && ig;
+
+        if (count < min) {
+            status.innerText = `❌ Need ${min - count} more photos.`;
+            status.style.color = "#ff4444";
+        } else if (count > max) {
+            status.innerText = `❌ ${count - max} photos over limit.`;
+            status.style.color = "#ff4444";
+        } else {
+            status.innerText = "✅ Ready to send!";
+            status.style.color = "#00ff88";
+        }
+
+        if (photoValid && detailsValid) {
+            submitBtn.disabled = false;
+            submitBtn.classList.add('active');
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('active');
+        }
+    }
+
+    document.getElementById('orderForm').onsubmit = function(e) {
+        e.preventDefault();
+        
+        const pkg = document.getElementById('package').options[document.getElementById('package').selectedIndex].text;
+        const name = document.getElementById('fullname').value;
+        const loc = document.getElementById('location').value;
+        const phone = document.getElementById('contact').value;
+        const ig = document.getElementById('ig_user').value;
+        const desc = document.getElementById('description').value || "None";
+
+        const businessNumber = "9863811729"; 
+
+        const message = `*NEW MAGAZINE ORDER*%0A` +
+                        `--------------------%0A` +
+                        `*Package:* ${pkg}%0A` +
+                        `*Photos:* ${selectedFiles.length}%0A` +
+                        `*Name:* ${name}%0A` +
+                        `*Location:* ${loc}%0A` +
+                        `*IG:* @${ig}%0A` +
+                        `*Phone:* ${phone}%0A` +
+                        `*Instructions:* ${desc}`;
+
+        window.open(`https://wa.me/${businessNumber}?text=${message}`, '_blank');
+    }
+</script>
+</body>
+</html>
